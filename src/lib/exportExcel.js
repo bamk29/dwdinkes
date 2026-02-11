@@ -104,3 +104,43 @@ export function exportArisanExcel(pemenangList, anggotaList, periode) {
     XLSX.utils.book_append_sheet(wb, ws, 'Arisan');
     XLSX.writeFile(wb, `Arisan_${periode}.xlsx`);
 }
+
+export function exportSumbanganExcel(title, data, anggotaList) {
+    const wsData = [
+        ['DHARMA WANITA PERSATUAN'],
+        ['DINAS KESEHATAN KABUPATEN ASAHAN'],
+        [''],
+        [title || 'LAPORAN SUMBANGAN'],
+        [`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`],
+        [''],
+        ['No', 'Tanggal', 'Jenis', 'Penerima', 'Jabatan', 'Status', 'Jumlah'],
+    ];
+
+    let total = 0;
+    data.forEach((item, idx) => {
+        const anggota = anggotaList.find(a => a.id === item.anggotaId);
+        const jumlah = Number(item.jumlah) || 0;
+        total += jumlah;
+        wsData.push([
+            idx + 1,
+            item.tanggal,
+            item.jenis,
+            anggota?.nama || '-',
+            anggota?.jabatan || '-',
+            item.status,
+            jumlah
+        ]);
+    });
+
+    wsData.push([]);
+    wsData.push(['', '', '', '', '', 'TOTAL', total]);
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+        { wch: 5 }, { wch: 15 }, { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 18 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Sumbangan');
+    XLSX.writeFile(wb, `Sumbangan_${new Date().toLocaleDateString('id-ID')}.xlsx`);
+}

@@ -66,7 +66,20 @@ export default function PengaturanPage() {
         
         savePemenang(newList);
         setPemenangList(newList);
+        savePemenang(newList);
+        setPemenangList(newList);
         setPemenangCount(newList.length);
+    };
+
+    const updateWinnerData = (memberId, field, value) => {
+        const list = pemenangList.map(p => {
+            if (p.anggotaId === memberId) {
+                return { ...p, [field]: value };
+            }
+            return p;
+        });
+        savePemenang(list);
+        setPemenangList(list);
     };
 
     const toggleSumbangan = (memberId) => {
@@ -92,7 +105,19 @@ export default function PengaturanPage() {
             newList = [...sumbanganList, newItem];
         }
         saveSumbangan(newList);
+        saveSumbangan(newList);
         setSumbanganList(newList);
+    };
+
+    const updateSumbanganData = (memberId, field, value) => {
+        const list = sumbanganList.map(s => {
+            if (s.anggotaId === memberId) {
+                return { ...s, [field]: value };
+            }
+            return s;
+        });
+        saveSumbangan(list);
+        setSumbanganList(list);
     };
 
     const filteredAnggota = anggotaList.filter(a => 
@@ -223,41 +248,59 @@ export default function PengaturanPage() {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2">
-                        {filteredAnggota.map(member => {
-                            const isWinner = pemenangList.find(p => p.anggotaId === member.id);
-                            return (
-                                <div 
-                                    key={member.id} 
-                                    onClick={() => toggleWinner(member.id)}
-                                    className={`
-                                        flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
-                                        ${isWinner 
-                                            ? 'bg-amber-500/10 border-amber-500/50' 
-                                            : 'bg-dark-800/50 border-dark-700 hover:border-dark-500'
-                                        }
-                                    `}
-                                >
-                                    <div className={`
-                                        w-5 h-5 rounded-full border-2 flex items-center justify-center
-                                        ${isWinner ? 'border-amber-400 bg-amber-400' : 'border-dark-400'}
-                                    `}>
-                                        {isWinner && <Check size={12} className="text-dark-900" strokeWidth={4} />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className={`font-semibold truncate ${isWinner ? 'text-amber-400' : 'text-white'}`}>
-                                            {member.nama}
-                                        </p>
-                                        <p className="text-xs text-dark-400 truncate">{member.kategori}</p>
-                                    </div>
-                                    {isWinner && (
-                                        <span className="text-xs font-mono text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                                            {formatDate(pemenangList.find(p => p.anggotaId === member.id)?.tanggal)}
-                                        </span>
-                                    )}
-                                </div>
-                            );
-                        })}
+                    <div className="glass-card overflow-x-auto max-h-[500px]">
+                        <table className="data-table">
+                            <thead className="sticky top-0 bg-dark-900 z-10">
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Nama Anggota</th>
+                                    <th>Tanggal Menang</th>
+                                    <th>Jumlah Diterima (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredAnggota.map(member => {
+                                    const winner = pemenangList.find(p => p.anggotaId === member.id);
+                                    const isWinner = !!winner;
+                                    return (
+                                        <tr key={member.id} className={isWinner ? 'bg-amber-500/5' : ''}>
+                                            <td className="w-12 text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isWinner} 
+                                                    onChange={() => toggleWinner(member.id)}
+                                                    className="checkbox checkbox-warning"
+                                                />
+                                            </td>
+                                            <td className="font-medium text-white">
+                                                {member.nama}
+                                                <p className="text-[10px] text-dark-400">{member.kategori}</p>
+                                            </td>
+                                            <td>
+                                                {isWinner && (
+                                                    <input 
+                                                        type="date" 
+                                                        value={winner.tanggal} 
+                                                        onChange={(e) => updateWinnerData(member.id, 'tanggal', e.target.value)}
+                                                        className="form-input py-1 px-2 text-sm h-8"
+                                                    />
+                                                )}
+                                            </td>
+                                            <td>
+                                                {isWinner && (
+                                                    <input 
+                                                        type="number" 
+                                                        value={winner.jumlah} 
+                                                        onChange={(e) => updateWinnerData(member.id, 'jumlah', Number(e.target.value))}
+                                                        className="form-input py-1 px-2 text-sm h-8 w-32"
+                                                    />
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -273,36 +316,75 @@ export default function PengaturanPage() {
                         Centang untuk menandai penerima bantuan secara cepat.
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-2">
-                        {filteredAnggota.map(member => {
-                            const isRecipient = sumbanganList.find(s => s.anggotaId === member.id);
-                            return (
-                                <div 
-                                    key={member.id} 
-                                    onClick={() => toggleSumbangan(member.id)}
-                                    className={`
-                                        flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
-                                        ${isRecipient 
-                                            ? 'bg-rose-500/10 border-rose-500/50' 
-                                            : 'bg-dark-800/50 border-dark-700 hover:border-dark-500'
-                                        }
-                                    `}
-                                >
-                                    <div className={`
-                                        w-5 h-5 rounded-full border-2 flex items-center justify-center
-                                        ${isRecipient ? 'border-rose-400 bg-rose-400' : 'border-dark-400'}
-                                    `}>
-                                        {isRecipient && <Check size={12} className="text-dark-900" strokeWidth={4} />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className={`font-semibold truncate ${isRecipient ? 'text-rose-400' : 'text-white'}`}>
-                                            {member.nama}
-                                        </p>
-                                        <p className="text-xs text-dark-400 truncate">{member.jabatan}</p>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="glass-card overflow-x-auto max-h-[500px]">
+                        <table className="data-table">
+                            <thead className="sticky top-0 bg-dark-900 z-10">
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Nama Anggota</th>
+                                    <th>Tanggal Terima</th>
+                                    <th>Jenis</th>
+                                    <th>Jumlah (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredAnggota.map(member => {
+                                    const recipient = sumbanganList.find(s => s.anggotaId === member.id);
+                                    const isRecipient = !!recipient;
+                                    return (
+                                        <tr key={member.id} className={isRecipient ? 'bg-rose-500/5' : ''}>
+                                            <td className="w-12 text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isRecipient} 
+                                                    onChange={() => toggleSumbangan(member.id)}
+                                                    className="checkbox checkbox-error" // error = red color in daisyui/tailwind usually
+                                                />
+                                            </td>
+                                            <td className="font-medium text-white">
+                                                {member.nama}
+                                                <p className="text-[10px] text-dark-400">{member.jabatan}</p>
+                                            </td>
+                                            <td>
+                                                {isRecipient && (
+                                                    <input 
+                                                        type="date" 
+                                                        value={recipient.tanggal} 
+                                                        onChange={(e) => updateSumbanganData(member.id, 'tanggal', e.target.value)}
+                                                        className="form-input py-1 px-2 text-sm h-8"
+                                                    />
+                                                )}
+                                            </td>
+                                            <td>
+                                                {isRecipient && (
+                                                    <select 
+                                                        value={recipient.jenis} 
+                                                        onChange={(e) => updateSumbanganData(member.id, 'jenis', e.target.value)}
+                                                        className="form-select py-1 px-2 text-sm h-8 w-32"
+                                                    >
+                                                        <option value="Sakit">Sakit</option>
+                                                        <option value="Duka Cita">Duka Cita</option>
+                                                        <option value="Menikah">Menikah</option>
+                                                        <option value="Melahirkan">Melahirkan</option>
+                                                        <option value="Lainnya">Lainnya</option>
+                                                    </select>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {isRecipient && (
+                                                    <input 
+                                                        type="number" 
+                                                        value={recipient.jumlah} 
+                                                        onChange={(e) => updateSumbanganData(member.id, 'jumlah', Number(e.target.value))}
+                                                        className="form-input py-1 px-2 text-sm h-8 w-32"
+                                                    />
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 

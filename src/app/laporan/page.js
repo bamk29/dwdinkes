@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, Download, FileSpreadsheet, Users, Wallet, Shuffle, Heart, ClipboardCheck } from 'lucide-react';
 import { getAnggota, getKeuangan, getPemenang, getAbsensi, getSumbangan, getPengaturan, formatRupiah, formatDate } from '@/lib/storage';
-import { exportKeuanganPDF, exportAbsensiPDF, exportArisanPDF, exportSumbanganPDF } from '@/lib/exportPdf';
-import { exportKeuanganExcel, exportAbsensiExcel, exportArisanExcel } from '@/lib/exportExcel';
+import { exportKeuanganPDF, exportAbsensiPDF, exportArisanPDF, exportSumbanganPDF, exportBeritaAcaraPDF } from '@/lib/exportPdf';
+import { exportKeuanganExcel, exportAbsensiExcel, exportArisanExcel, exportSumbanganExcel } from '@/lib/exportExcel';
 
 export default function LaporanPage() {
     const [activeTab, setActiveTab] = useState('keuangan');
@@ -53,7 +53,7 @@ export default function LaporanPage() {
             else exportAbsensiExcel('DAFTAR HADIR', formatDate(today), data, anggota);
         } else if (type === 'sumbangan') {
             if (format === 'pdf') exportSumbanganPDF('LAPORAN SUMBANGAN', sumbangan, anggota);
-            else alert('Export Excel untuk sumbangan belum tersedia'); 
+            else exportSumbanganExcel('LAPORAN SUMBANGAN', sumbangan, anggota); 
         }
     };
 
@@ -142,7 +142,7 @@ export default function LaporanPage() {
                     <h3 className="text-md font-semibold text-white mb-3">✅ Sudah Mendapat Arisan</h3>
                     <div className="glass-card overflow-x-auto mb-6">
                         <table className="data-table">
-                            <thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Kategori</th><th>Jumlah</th></tr></thead>
+                            <thead><tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Kategori</th><th>Jumlah</th><th>Aksi</th></tr></thead>
                             <tbody>
                                 {pemenang.length === 0 ? (
                                     <tr><td colSpan={5} className="text-center py-8 text-dark-400">Belum ada pemenang</td></tr>
@@ -156,6 +156,15 @@ export default function LaporanPage() {
                                                 <td className="font-medium text-white">{p.nama || a?.nama || '-'}</td>
                                                 <td><span className="badge badge-info">{a?.kategori || '-'}</span></td>
                                                 <td className="text-amber-400 font-semibold">{formatRupiah(p.jumlah || 0)}</td>
+                                                <td>
+                                                    <button 
+                                                        onClick={() => exportBeritaAcaraPDF(p, anggota, getPengaturan())} 
+                                                        className="btn btn-xs btn-outline border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
+                                                        title="Cetak Berita Acara"
+                                                    >
+                                                        <ClipboardCheck size={12} className="mr-1" /> Cetak BA
+                                                    </button>
+                                                </td>
                                             </tr>
                                         );
                                     })
@@ -230,6 +239,7 @@ export default function LaporanPage() {
                 <div>
                      <div className="flex gap-2 mb-6 justify-end">
                         <button onClick={() => handleExport('sumbangan', 'pdf')} className="btn btn-outline btn-sm"><Download size={14} /> PDF</button>
+                        <button onClick={() => handleExport('sumbangan', 'excel')} className="btn btn-outline btn-sm"><FileSpreadsheet size={14} /> Excel</button>
                     </div>
                     <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="glass-card p-5 text-center">
