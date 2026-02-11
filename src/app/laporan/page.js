@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, Download, FileSpreadsheet, Users, Wallet, Shuffle, Heart, ClipboardCheck } from 'lucide-react';
 import { getAnggota, getKeuangan, getPemenang, getAbsensi, getSumbangan, getPengaturan, formatRupiah, formatDate } from '@/lib/storage';
-import { exportKeuanganPDF, exportAbsensiPDF, exportArisanPDF, exportSumbanganPDF, exportBeritaAcaraPDF } from '@/lib/exportPdf';
-import { exportKeuanganExcel, exportAbsensiExcel, exportArisanExcel, exportSumbanganExcel } from '@/lib/exportExcel';
+import { exportKeuanganPDF, exportAbsensiPDF, exportArisanPDF, exportSumbanganPDF, exportBeritaAcaraPDF, exportAbsensiRekapPDF } from '@/lib/exportPdf';
+import { exportKeuanganExcel, exportAbsensiExcel, exportArisanExcel, exportSumbanganExcel, exportAbsensiRekapExcel } from '@/lib/exportExcel';
 
 export default function LaporanPage() {
     const [activeTab, setActiveTab] = useState('keuangan');
@@ -47,10 +47,23 @@ export default function LaporanPage() {
             if (format === 'pdf') exportArisanPDF(pemenang, anggota, pengaturan.periodeAktif || 'Periode Aktif');
             else exportArisanExcel(pemenang, anggota, pengaturan.periodeAktif || 'Periode Aktif');
         } else if (type === 'absensi') {
-            const today = absensiDates[0] || new Date().toISOString().split('T')[0];
-            const data = absensi.filter(a => a.tanggal === today).map(a => ({ anggotaId: a.anggotaId, status: a.status }));
-            if (format === 'pdf') exportAbsensiPDF('DAFTAR HADIR', formatDate(today), data, anggota);
-            else exportAbsensiExcel('DAFTAR HADIR', formatDate(today), data, anggota);
+            const rekapData = anggota.filter(a => a.status === 'aktif').map(a => {
+                const records = absensi.filter(ab => ab.anggotaId === a.id);
+                const h = records.filter(r => r.status === 'hadir').length;
+                const i = records.filter(r => r.status === 'izin').length;
+                const s = records.filter(r => r.status === 'sakit').length;
+                const al = records.filter(r => r.status === 'alpha').length;
+                const total = records.length;
+                return {
+                    nama: a.nama,
+                    kategori: a.kategori,
+                    h, i, s, al,
+                    persen: total > 0 ? Math.round((h / total) * 100) : 0
+                };
+            });
+            const tgl = new Date().toLocaleDateString('id-ID');
+            if (format === 'pdf') exportAbsensiRekapPDF('REKAP ABSENSI ANGGOTA', rekapData, tgl);
+            else exportAbsensiRekapExcel('REKAP ABSENSI ANGGOTA', rekapData, tgl);
         } else if (type === 'sumbangan') {
             if (format === 'pdf') exportSumbanganPDF('LAPORAN SUMBANGAN', sumbangan, anggota);
             else exportSumbanganExcel('LAPORAN SUMBANGAN', sumbangan, anggota); 

@@ -144,3 +144,37 @@ export function exportSumbanganExcel(title, data, anggotaList) {
     XLSX.utils.book_append_sheet(wb, ws, 'Sumbangan');
     XLSX.writeFile(wb, `Sumbangan_${new Date().toLocaleDateString('id-ID')}.xlsx`);
 }
+
+export function exportAbsensiRekapExcel(title, data, tanggalCetak) {
+    const wsData = [
+        ['DHARMA WANITA PERSATUAN'],
+        ['DINAS KESEHATAN KABUPATEN ASAHAN'],
+        [''],
+        [title || 'REKAP ABSENSI'],
+        [`Tanggal Cetak: ${tanggalCetak}`],
+        [''],
+        ['No', 'Nama Anggota', 'Kategori', 'Hadir', 'Izin', 'Sakit', 'Alpha', 'Persentase (%)'],
+    ];
+
+    data.forEach((d, idx) => {
+        wsData.push([
+            idx + 1,
+            d.nama,
+            d.kategori,
+            d.h,
+            d.i,
+            d.s,
+            d.al,
+            d.persen
+        ]);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+        { wch: 5 }, { wch: 25 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 15 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Rekap Absensi');
+    XLSX.writeFile(wb, `Rekap_Absensi_${new Date().getFullYear()}.xlsx`);
+}
