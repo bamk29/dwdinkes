@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { ClipboardList, FileText, Download, Filter, CheckCircle, XCircle, Clock, AlertTriangle, Printer } from 'lucide-react';
-import { getAnggota, getAbsensi, saveAbsensi, getJadwal, formatDate } from '@/lib/storage';
+import { ClipboardList, FileText, Download, Filter, CheckCircle, XCircle, Clock, AlertTriangle, Printer, Trophy } from 'lucide-react';
+import { getAnggota, getAbsensi, saveAbsensi, getJadwal, getPemenang, formatDate } from '@/lib/storage';
 
 export default function AbsensiPage() {
     const [anggota, setAnggota] = useState([]);
     const [absensi, setAbsensi] = useState([]);
     const [jadwal, setJadwal] = useState([]);
+    const [pemenang, setPemenang] = useState([]);
     const [tab, setTab] = useState('input');
     const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
     const [kegiatan, setKegiatan] = useState('Arisan');
@@ -17,6 +18,7 @@ export default function AbsensiPage() {
         setAnggota(getAnggota().filter(a => a.status === 'aktif'));
         setAbsensi(getAbsensi());
         setJadwal(getJadwal());
+        setPemenang(getPemenang());
     }, []);
 
     const todayAbsensi = absensi.filter(a => a.tanggal === tanggal && a.kegiatan === kegiatan);
@@ -332,7 +334,14 @@ export default function AbsensiPage() {
                                     <div key={a.id} className={`flex items-center gap-3 px-5 py-3 border-b border-dark-700/50 hover:bg-dark-800/50 transition-colors ${currentStatus ? 'bg-dark-800/20' : ''}`}>
                                         <span className="text-dark-500 text-xs w-8 text-right font-mono">{idx + 1}</span>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-white text-sm truncate">{a.nama}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium text-white text-sm truncate">{a.nama}</p>
+                                                {pemenang.find(p => p.anggotaId === a.id) && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20" title="Sudah Menang Arisan">
+                                                        <Trophy size={10} />
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-xs text-dark-500">{a.jabatan}</p>
                                         </div>
                                         <div className="flex gap-1">

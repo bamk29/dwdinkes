@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Settings, Save, RotateCcw, Users, AlertCircle, Calendar, Clock } from 'lucide-react';
-import { getPengaturan, savePengaturan, getAnggota, getPemenang, formatRupiah } from '@/lib/storage';
+import { Settings, Save, RotateCcw, Users, AlertCircle, Calendar, Clock, Check, Heart } from 'lucide-react';
+import { getPengaturan, savePengaturan, getAnggota, getPemenang, savePemenang, addPemenang, getSumbangan, saveSumbangan, formatRupiah, formatDate } from '@/lib/storage';
 
 export default function PengaturanPage() {
     const [form, setForm] = useState(getPengaturan());
@@ -9,10 +9,22 @@ export default function PengaturanPage() {
     const [anggotaCount, setAnggotaCount] = useState(0);
     const [pemenangCount, setPemenangCount] = useState(0);
 
+    const [anggotaList, setAnggotaList] = useState([]);
+    const [pemenangList, setPemenangList] = useState([]);
+    const [sumbanganList, setSumbanganList] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
     useEffect(() => {
         setForm(getPengaturan());
-        setAnggotaCount(getAnggota().filter(a => a.status === 'aktif').length);
-        setPemenangCount(getPemenang().length);
+        const allAnggota = getAnggota().filter(a => a.status === 'aktif');
+        setAnggotaList(allAnggota);
+        setAnggotaCount(allAnggota.length);
+        
+        const allPemenang = getPemenang();
+        setPemenangList(allPemenang);
+        setPemenangCount(allPemenang.length);
+
+        setSumbanganList(getSumbangan());
     }, []);
 
     const handleSave = (e) => {
@@ -29,6 +41,63 @@ export default function PengaturanPage() {
             savePengaturan(defaults);
         }
     };
+
+    const toggleWinner = (memberId) => {
+        const isWinner = pemenangList.find(p => p.anggotaId === memberId);
+        let newList;
+        
+        if (isWinner) {
+            // Remove from winners
+            if (!confirm('Batalkan status pemenang untuk anggota ini?')) return;
+            newList = pemenangList.filter(p => p.anggotaId !== memberId);
+        } else {
+            // Add to winners
+            const member = anggotaList.find(a => a.id === memberId);
+            const newItem = {
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+                anggotaId: memberId,
+                nama: member?.nama || 'Unknown',
+                tanggal: new Date().toISOString().split('T')[0], // Default today
+                jumlah: form.hadiahArisan || (form.iuranPerBulan * anggotaCount),
+                keterangan: 'Manual',
+            };
+            newList = [...pemenangList, newItem];
+        }
+        
+        savePemenang(newList);
+        setPemenangList(newList);
+        setPemenangCount(newList.length);
+    };
+
+    const toggleSumbangan = (memberId) => {
+        const hasSumbangan = sumbanganList.find(s => s.anggotaId === memberId);
+        let newList;
+
+        if (hasSumbangan) {
+             // Remove 
+             if (!confirm('Hapus status penerima sumbangan untuk anggota ini? Data sumbangan terkait akan dihapus.')) return;
+             newList = sumbanganList.filter(s => s.anggotaId !== memberId);
+        } else {
+            // Add default
+            const member = anggotaList.find(a => a.id === memberId);
+            const newItem = {
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+                anggotaId: memberId,
+                jenis: 'Lainnya',
+                keterangan: 'Quick Add via Settings',
+                jumlah: 0,
+                tanggal: new Date().toISOString().split('T')[0],
+                status: 'disalurkan'
+            };
+            newList = [...sumbanganList, newItem];
+        }
+        saveSumbangan(newList);
+        setSumbanganList(newList);
+    };
+
+    const filteredAnggota = anggotaList.filter(a => 
+        a.nama.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -131,6 +200,109 @@ export default function PengaturanPage() {
                                 {form.hadiahArisan > 0 ? formatRupiah(form.hadiahArisan) : 'Isi 0 jika hadiah = total iuran bulan itu'}
                             </p>
                         </div>
+                    </div>
+                </div>
+
+                {/* Manual Winner Management */}
+                <div className="glass-card p-6 mb-6 border-amber-500/30">
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <Users size={18} className="text-amber-400" /> Manajemen Pemenang Manual
+                    </h2>
+                    <p className="text-sm text-dark-400 mb-4">
+                        Centang anggota yang <strong>sudah menang</strong> arisan di periode ini. 
+                        Anggota yang dicentang tidak akan muncul saat pengocokan arisan.
+                    </p>
+                    
+                    <div className="mb-4">
+                        <input 
+                            type="text" 
+                            placeholder="Cari nama anggota..." 
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="form-input w-full"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2">
+                        {filteredAnggota.map(member => {
+                            const isWinner = pemenangList.find(p => p.anggotaId === member.id);
+                            return (
+                                <div 
+                                    key={member.id} 
+                                    onClick={() => toggleWinner(member.id)}
+                                    className={`
+                                        flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
+                                        ${isWinner 
+                                            ? 'bg-amber-500/10 border-amber-500/50' 
+                                            : 'bg-dark-800/50 border-dark-700 hover:border-dark-500'
+                                        }
+                                    `}
+                                >
+                                    <div className={`
+                                        w-5 h-5 rounded-full border-2 flex items-center justify-center
+                                        ${isWinner ? 'border-amber-400 bg-amber-400' : 'border-dark-400'}
+                                    `}>
+                                        {isWinner && <Check size={12} className="text-dark-900" strokeWidth={4} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`font-semibold truncate ${isWinner ? 'text-amber-400' : 'text-white'}`}>
+                                            {member.nama}
+                                        </p>
+                                        <p className="text-xs text-dark-400 truncate">{member.kategori}</p>
+                                    </div>
+                                    {isWinner && (
+                                        <span className="text-xs font-mono text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                                            {formatDate(pemenangList.find(p => p.anggotaId === member.id)?.tanggal)}
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+
+
+                {/* Social Recipient Management */}
+                <div className="glass-card p-6 mb-6 border-rose-500/30">
+                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <Heart size={18} className="text-rose-400" /> Status Penerima Sumbangan
+                    </h2>
+                    <p className="text-sm text-dark-400 mb-4">
+                        Pantau anggota yang pernah menerima sumbangan/sosial. 
+                        Centang untuk menandai penerima bantuan secara cepat.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-2">
+                        {filteredAnggota.map(member => {
+                            const isRecipient = sumbanganList.find(s => s.anggotaId === member.id);
+                            return (
+                                <div 
+                                    key={member.id} 
+                                    onClick={() => toggleSumbangan(member.id)}
+                                    className={`
+                                        flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
+                                        ${isRecipient 
+                                            ? 'bg-rose-500/10 border-rose-500/50' 
+                                            : 'bg-dark-800/50 border-dark-700 hover:border-dark-500'
+                                        }
+                                    `}
+                                >
+                                    <div className={`
+                                        w-5 h-5 rounded-full border-2 flex items-center justify-center
+                                        ${isRecipient ? 'border-rose-400 bg-rose-400' : 'border-dark-400'}
+                                    `}>
+                                        {isRecipient && <Check size={12} className="text-dark-900" strokeWidth={4} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`font-semibold truncate ${isRecipient ? 'text-rose-400' : 'text-white'}`}>
+                                            {member.nama}
+                                        </p>
+                                        <p className="text-xs text-dark-400 truncate">{member.jabatan}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

@@ -169,6 +169,68 @@ export function exportArisanPDF(pemenangList, anggotaList, periode) {
     doc.save(`Rekap_Arisan_${periode}.pdf`);
 }
 
+export function exportSumbanganPDF(title, data, anggotaList) {
+    const doc = new jsPDF();
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DHARMA WANITA PERSATUAN', doc.internal.pageSize.width / 2, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text('DINAS KESEHATAN KABUPATEN ASAHAN', doc.internal.pageSize.width / 2, 28, { align: 'center' });
+
+    doc.setLineWidth(0.5);
+    doc.line(14, 33, doc.internal.pageSize.width - 14, 33);
+    doc.setLineWidth(0.2);
+    doc.line(14, 34, doc.internal.pageSize.width - 14, 34);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title || 'LAPORAN SUMBANGAN', doc.internal.pageSize.width / 2, 45, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 55);
+
+    const tableData = data.map((item, idx) => {
+        const anggota = anggotaList.find(a => a.id === item.anggotaId);
+        return [
+            idx + 1,
+            item.tanggal,
+            item.jenis,
+            anggota?.nama || '-',
+            item.status,
+            formatCurrency(item.jumlah || 0)
+        ];
+    });
+
+    const total = data.reduce((s, d) => s + Number(d.jumlah), 0);
+    tableData.push(['', '', '', '', 'TOTAL', formatCurrency(total)]);
+
+    autoTable(doc, {
+        startY: 60,
+        head: [['No', 'Tanggal', 'Jenis', 'Penerima', 'Status', 'Jumlah']],
+        body: tableData,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [244, 63, 94], textColor: 255, fontStyle: 'bold' }, // Rose color for Sumbangan
+        columnStyles: {
+            0: { cellWidth: 10, halign: 'center' },
+            5: { halign: 'right' },
+        },
+    });
+
+    const finalY = doc.lastAutoTable.finalY + 20;
+    doc.setFontSize(10);
+    doc.text('Mengetahui,', 30, finalY);
+    doc.text('Kisaran, ..............................', doc.internal.pageSize.width - 55, finalY);
+    doc.text('Ketua DWP', 30, finalY + 5);
+    doc.text('Sekretaris', doc.internal.pageSize.width - 55, finalY + 5);
+    doc.text('____________________', 20, finalY + 30);
+    doc.text('____________________', doc.internal.pageSize.width - 65, finalY + 30);
+
+    doc.save(`Laporan_Sumbangan.pdf`);
+}
+
 function formatCurrency(val) {
     return new Intl.NumberFormat('id-ID').format(val);
 }

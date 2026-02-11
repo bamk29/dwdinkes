@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, Download, FileSpreadsheet, Users, Wallet, Shuffle, Heart, ClipboardCheck } from 'lucide-react';
 import { getAnggota, getKeuangan, getPemenang, getAbsensi, getSumbangan, getPengaturan, formatRupiah, formatDate } from '@/lib/storage';
-import { exportKeuanganPDF, exportAbsensiPDF, exportArisanPDF } from '@/lib/exportPdf';
+import { exportKeuanganPDF, exportAbsensiPDF, exportArisanPDF, exportSumbanganPDF } from '@/lib/exportPdf';
 import { exportKeuanganExcel, exportAbsensiExcel, exportArisanExcel } from '@/lib/exportExcel';
 
 export default function LaporanPage() {
@@ -51,6 +51,9 @@ export default function LaporanPage() {
             const data = absensi.filter(a => a.tanggal === today).map(a => ({ anggotaId: a.anggotaId, status: a.status }));
             if (format === 'pdf') exportAbsensiPDF('DAFTAR HADIR', formatDate(today), data, anggota);
             else exportAbsensiExcel('DAFTAR HADIR', formatDate(today), data, anggota);
+        } else if (type === 'sumbangan') {
+            if (format === 'pdf') exportSumbanganPDF('LAPORAN SUMBANGAN', sumbangan, anggota);
+            else alert('Export Excel untuk sumbangan belum tersedia'); 
         }
     };
 
@@ -225,6 +228,9 @@ export default function LaporanPage() {
             {/* SUMBANGAN TAB */}
             {activeTab === 'sumbangan' && (
                 <div>
+                     <div className="flex gap-2 mb-6 justify-end">
+                        <button onClick={() => handleExport('sumbangan', 'pdf')} className="btn btn-outline btn-sm"><Download size={14} /> PDF</button>
+                    </div>
                     <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="glass-card p-5 text-center">
                             <p className="text-2xl font-bold text-white">{sumbangan.length}</p>
