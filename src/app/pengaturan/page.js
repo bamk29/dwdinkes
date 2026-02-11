@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Settings, Save, RotateCcw, Users, AlertCircle } from 'lucide-react';
+import { Settings, Save, RotateCcw, Users, AlertCircle, Calendar, Clock } from 'lucide-react';
 import { getPengaturan, savePengaturan, getAnggota, getPemenang, formatRupiah } from '@/lib/storage';
 
 export default function PengaturanPage() {
@@ -36,7 +36,7 @@ export default function PengaturanPage() {
                 <h1 className="text-2xl lg:text-3xl font-bold text-white flex items-center gap-3">
                     <Settings className="text-primary-400" /> Pengaturan Arisan
                 </h1>
-                <p className="text-dark-400 mt-1">Konfigurasi periode dan aturan arisan</p>
+                <p className="text-dark-400 mt-1">Konfigurasi periode dan aturan main arisan</p>
             </div>
 
             {/* Info Cards */}
@@ -78,33 +78,46 @@ export default function PengaturanPage() {
 
             <form onSubmit={handleSave}>
                 <div className="glass-card p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-white mb-6">Konfigurasi Periode</h2>
+                    <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                        <Calendar size={18} className="text-primary-400" /> Konfigurasi Periode & Waktu
+                    </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                            <label className="form-label">Periode Pengocokan</label>
+                            <label className="form-label">Frekuensi Kocok (Jadwal)</label>
+                            <select className="form-select bg-dark-800/50 cursor-not-allowed" disabled>
+                                <option>1 Bulan Sekali</option>
+                            </select>
+                            <p className="text-xs text-dark-500 mt-1">Arisan dikocok setiap bulan (Fixed)</p>
+                        </div>
+                        <div>
+                            <label className="form-label">Periode Tutup Buku (Siklus)</label>
                             <select value={form.periode} onChange={e => setForm({ ...form, periode: e.target.value })} className="form-select">
                                 <option value="6">6 Bulan Sekali</option>
-                                <option value="12">1 Tahun Sekali</option>
+                                <option value="12">1 Tahun Sekali (12 Bulan)</option>
                             </select>
-                            <p className="text-xs text-dark-500 mt-1">Seberapa sering pengocokan arisan dilakukan</p>
+                            <p className="text-xs text-dark-500 mt-1">Lama satu putaran arisan sebelum reset/tutup buku</p>
                         </div>
                         <div>
                             <label className="form-label">Nama Periode Aktif</label>
                             <input value={form.periodeAktif} onChange={e => setForm({ ...form, periodeAktif: e.target.value })} className="form-input" placeholder="Contoh: Periode 2025" />
                         </div>
-                        <div>
-                            <label className="form-label">Tanggal Mulai Periode</label>
-                            <input type="date" value={form.tanggalMulai} onChange={e => setForm({ ...form, tanggalMulai: e.target.value })} className="form-input" />
-                        </div>
-                        <div>
-                            <label className="form-label">Tanggal Berakhir Periode</label>
-                            <input type="date" value={form.tanggalBerakhir} onChange={e => setForm({ ...form, tanggalBerakhir: e.target.value })} className="form-input" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="form-label">Tanggal Mulai</label>
+                                <input type="date" value={form.tanggalMulai} onChange={e => setForm({ ...form, tanggalMulai: e.target.value })} className="form-input" />
+                            </div>
+                            <div>
+                                <label className="form-label">Tanggal Akhir</label>
+                                <input type="date" value={form.tanggalBerakhir} onChange={e => setForm({ ...form, tanggalBerakhir: e.target.value })} className="form-input" />
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="glass-card p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-white mb-6">Konfigurasi Iuran & Hadiah</h2>
+                    <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                        <Clock size={18} className="text-amber-400" /> Konfigurasi Iuran & Hadiah
+                    </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <label className="form-label">Iuran Per Bulan (Rp)</label>
@@ -123,14 +136,14 @@ export default function PengaturanPage() {
 
                 {/* Estimasi */}
                 <div className="glass-card p-6 mb-6 border-primary-500/30">
-                    <h2 className="text-lg font-semibold text-white mb-4">📊 Estimasi</h2>
+                    <h2 className="text-lg font-semibold text-white mb-4">📊 Estimasi Perputaran Uang</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                         <div className="flex justify-between p-3 rounded-lg bg-dark-900/50">
-                            <span className="text-dark-400">Iuran per bulan (total)</span>
+                            <span className="text-dark-400">Total Iuran per Bulan</span>
                             <span className="text-white font-semibold">{formatRupiah(form.iuranPerBulan * anggotaCount)}</span>
                         </div>
                         <div className="flex justify-between p-3 rounded-lg bg-dark-900/50">
-                            <span className="text-dark-400">Arisan per {form.periode} bulan</span>
+                            <span className="text-dark-400">Total Periode ({form.periode} Bulan)</span>
                             <span className="text-white font-semibold">{formatRupiah(form.iuranPerBulan * anggotaCount * Number(form.periode))}</span>
                         </div>
                     </div>
